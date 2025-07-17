@@ -1,0 +1,93 @@
+
+        'go' => 'go',
+        'come' => 'come',
+        'now' => 'now',
+        'said' => 'said',
+        'names' => 'names',
+        'lived' => 'lived',
+        'with' => 'with',
+        'in' => 'in',
+        'underneath' => 'under',
+        'very' => 'very',
+        'one' => 'one',
+        'once' => 'once',
+        'upon' => 'upon',
+        'time' => 'time',
+        // Add more as needed
+    ];
+
+    // Pet names and gentle warnings to sprinkle in
+    $pet_names = ['sweetie', 'little one', 'honey', 'cutie', 'baby'];
+    $gentle_warnings = [
+        'be careful', 'be good', 'stay safe', 'don’t get into trouble', 'mommy loves you'
+    ];
+
+    // Split into sentences for possible simplification
+    $sentences = preg_split('/([.?!]+)/', $input, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+
+    $output = '';
+    $pet_name_index = 0;
+    $warning_index = 0;
+
+    foreach ($sentences as $i => $sentence) {
+        // Only process actual sentences, skip punctuation
+        if (preg_match('/[.?!]/', $sentence)) {
+            $output .= $sentence . ' ';
+            continue;
+        }
+
+        // Replace words with parentese equivalents
+        $words = preg_split('/(\s+)/', $sentence, -1, PREG_SPLIT_DELIM_CAPTURE);
+        foreach ($words as &$word) {
+            $clean = strtolower(trim($word, ".,!?;:'\""));
+            if (isset($parentese_dict[$clean])) {
+                // Preserve capitalization
+                $word = (ctype_upper(substr($word, 0, 1)) ? ucfirst($parentese_dict[$clean]) : $parentese_dict[$clean]);
+            }
+        }
+        $sentence = implode('', $words);
+
+        // Add pet names and gentle warnings at natural places
+        if (stripos($sentence, 'said') !== false && rand(0, 1)) {
+            $sentence = preg_replace('/(said[^,]*,)/i', '$1 '.$pet_names[$pet_name_index++ % count($pet_names)].',', $sentence);
+        }
+        if (stripos($sentence, 'don’t') !== false || stripos($sentence, "don't") !== false) {
+            $sentence .= ' ' . $gentle_warnings[$warning_index++ % count($gentle_warnings)];
+        }
+
+        // Simplify long sentences for baby
+        if (str_word_count($sentence) > 18) {
+            $sentence = preg_replace('/,.*?,/', ', ', $sentence); // Remove some clauses
+        }
+
+        $output .= trim($sentence) . ' ';
+    }
+
+    // Clean up extra spaces
+    $output = preg_replace('/\s+/', ' ', $output);
+
+    return trim($output);
+}
+
+    // Example usage:
+    $input = <<<EOT
+    Once upon a time there were four little Rabbits, and their names were—
+
+    Flopsy,
+
+    Mopsy,
+
+    Cotton-tail,
+
+    and Peter.
+
+    They lived with their Mother in a sand-bank, underneath the root of a very big fir-tree.
+
+    'Now my dears,' said old Mrs. Rabbit one morning, 'you may go into the fields or down the lane, but don't go into Mr. McGregor's garden: your Father had an accident there; he was put in a pie by Mrs. McGregor.'
+
+    'Now run along, and don't get into mischief. I am going out.'
+    EOT;
+
+echo parentese_translate($input);
+
+?>
